@@ -71,20 +71,20 @@ code | response | description
 --- | --- | ---
 204 | | **success**
 400 | invalid_uri |
- | invalid_ttl |
- | missing_crypto_keys |
- | invalid_crypto_keys |
+... | invalid_ttl |
+... | missing_crypto_keys |
+... | invalid_crypto_keys |
 401 | unauthorized |
 404 | endpoint_not_found |
 410 | endpoint_not_valid | Subscription is invalid and will never be valid
 413 | payload_too_large |
 501 | not_implemented | Endpoint does not support encryption algorithm
 502 | tls_error | Endpoint misbehaving
- | ssl_error |
- | io_error |
- | invalid_response |
- | other |
- | unspecified |
+... | ssl_error |
+... | io_error |
+... | invalid_response |
+... | other |
+... | unspecified |
 504 | timeout_error | Request to endpoint timed out
 
 License
