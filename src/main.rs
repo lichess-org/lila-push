@@ -12,6 +12,7 @@ use structopt::StructOpt;
 use futures::compat::Future01CompatExt as _;
 use tide::{Context, Response};
 use tide::response::IntoResponse;
+use tide::middleware::RootLogger;
 use tide::http::status::StatusCode;
 use web_push::{WebPushClient, WebPushMessageBuilder, SubscriptionInfo, VapidSignatureBuilder, WebPushError};
 use web_push::ContentEncoding::AesGcm;
@@ -113,6 +114,7 @@ fn main() {
     };
 
     let mut app = tide::App::new(app);
+    app.middleware(RootLogger::new());
     app.at("/").post(push);
     app.serve(bind).expect("bind");
 }
