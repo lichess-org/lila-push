@@ -67,9 +67,9 @@ HTTP API
 }
 ```
 
-Code | Response |
+code | response | description
 --- | --- | ---
-204 | No Content | Success
+204 | | **success**
 
 License
 -------
