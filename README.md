@@ -12,7 +12,7 @@ Setup
    openssl ecparam -name prime256v1 -genkey -noout -out private.pem
    ```
 
-2. Print public key and set `push.vapid.public_key` in lila configuration:
+2. Print public key and set `push.web.vapid_public_key` in lila configuration:
 
    ```
    openssl ec -in private.pem -pubout -outform DER | tail -c 65 | base64 | tr -d '\n'
