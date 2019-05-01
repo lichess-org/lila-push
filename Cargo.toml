@@ -1,0 +1,14 @@
+[package]
+name = "lila-push"
+version = "0.1.0"
+publish = false
+description = "Web push microservice for lichess.org"
+repository = "https://github.com/niklasf/lila-push"
+readme = "README.md"
+license = "AGPL-3.0+"
+authors = ["Niklas Fiekas <niklas.fiekas@backscattering.de>"]
+edition = "2018"
+
+[dependencies]
+tide = { git = "https://github.com/Nemo157/tide.git", branch = "futures-alpha.15" }
+structopt = "0.2.15"
