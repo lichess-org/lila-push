@@ -18,17 +18,17 @@ use web_push::ContentEncoding::AesGcm;
 
 #[derive(StructOpt, Debug)]
 struct Opt {
-    /// PEM file with private VAPID key.
+    /// PEM file with private VAPID key
     #[structopt(long = "vapid", parse(from_os_str))]
     vapid: PathBuf,
-    /// VAPID subject (example: mailto:contact@lichess.org).
+    /// VAPID subject (example: mailto:contact@lichess.org)
     #[structopt(long = "subject")]
     subject: String,
 
-    /// Listen on this address.
+    /// Listen on this address
     #[structopt(long = "address", default_value = "127.0.0.1")]
     address: String,
-    /// Listen on this port.
+    /// Listen on this port
     #[structopt(long = "port", default_value = "9054")]
     port: u16,
 }
