@@ -56,7 +56,31 @@ impl From<WebPushError> for PushError {
 
 impl IntoResponse for PushError {
     fn into_response(self) -> Response {
-        "error".with_status(StatusCode::BAD_REQUEST).into_response()
+        let PushError(err) = self;
+
+        let status = match err {
+            WebPushError::Unauthorized => StatusCode::UNAUTHORIZED,
+            WebPushError::EndpointNotValid => StatusCode::GONE,
+            WebPushError::EndpointNotFound => StatusCode::NOT_FOUND,
+            WebPushError::PayloadTooLarge => StatusCode::PAYLOAD_TOO_LARGE,
+            WebPushError::BadRequest(_)
+            | WebPushError::InvalidUri
+            | WebPushError::InvalidTtl
+            | WebPushError::MissingCryptoKeys
+            | WebPushError::InvalidCryptoKeys => StatusCode::BAD_REQUEST,
+            WebPushError::ServerError(_)
+            | WebPushError::TlsError
+            | WebPushError::SslError
+            | WebPushError::IoError
+            | WebPushError::InvalidResponse
+            | WebPushError::Unspecified
+            | WebPushError::Other(_) => StatusCode::BAD_GATEWAY,
+            WebPushError::NotImplemented => StatusCode::NOT_IMPLEMENTED,
+            WebPushError::TimeoutError => StatusCode::GATEWAY_TIMEOUT,
+            WebPushError::InvalidPackageName => unreachable!(), // firebase
+        };
+
+        err.short_description().with_status(status).into_response()
     }
 }
 
