@@ -12,3 +12,6 @@ edition = "2018"
 [dependencies]
 tide = { git = "https://github.com/Nemo157/tide.git", branch = "futures-alpha.15" }
 structopt = "0.2.15"
+web-push = "0.4.2"
+serde = { version = "1.0.90", features = ["derive"] }
+futures-preview = { version = "0.3.0-alpha.15", features = ["compat"] }
