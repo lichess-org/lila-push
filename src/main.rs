@@ -1,8 +1,9 @@
-#![feature(async_await, await_macro)]
+#![feature(async_await, await_macro, try_blocks)]
 
 #![warn(rust_2018_idioms)]
 
 use serde::Deserialize;
+use std::collections::BTreeMap;
 use std::fs;
 use std::io::Cursor;
 use std::net::SocketAddr;
@@ -10,10 +11,9 @@ use std::path::PathBuf;
 use std::time::Duration;
 use structopt::StructOpt;
 use futures::compat::Future01CompatExt as _;
-use tide::{Context, Response};
-use tide::response::IntoResponse;
+use tide::{Context, EndpointResult, response};
+use tide::error::ResultExt;
 use tide::middleware::RootLogger;
-use tide::http::status::StatusCode;
 use web_push::{WebPushClient, WebPushMessageBuilder, SubscriptionInfo, VapidSignatureBuilder, WebPushError};
 use web_push::ContentEncoding::AesGcm;
 
@@ -42,65 +42,36 @@ struct App {
 
 #[derive(Deserialize, Debug)]
 struct PushRequest {
-    sub: SubscriptionInfo,
+    subs: Vec<SubscriptionInfo>,
     payload: String,
     ttl: u32,
 }
 
-struct PushError(WebPushError);
-
-impl From<WebPushError> for PushError {
-    fn from(err: WebPushError) -> PushError {
-        PushError(err)
-    }
-}
-
-impl IntoResponse for PushError {
-    fn into_response(self) -> Response {
-        let PushError(err) = self;
-
-        let status = match err {
-            WebPushError::Unauthorized => StatusCode::UNAUTHORIZED,
-            WebPushError::EndpointNotValid => StatusCode::GONE,
-            WebPushError::EndpointNotFound => StatusCode::NOT_FOUND,
-            WebPushError::PayloadTooLarge => StatusCode::PAYLOAD_TOO_LARGE,
-            WebPushError::BadRequest(_)
-            | WebPushError::InvalidUri
-            | WebPushError::InvalidTtl
-            | WebPushError::MissingCryptoKeys
-            | WebPushError::InvalidCryptoKeys => StatusCode::BAD_REQUEST,
-            WebPushError::ServerError(_)
-            | WebPushError::TlsError
-            | WebPushError::SslError
-            | WebPushError::IoError
-            | WebPushError::InvalidResponse
-            | WebPushError::Unspecified
-            | WebPushError::Other(_) => StatusCode::BAD_GATEWAY,
-            WebPushError::NotImplemented => StatusCode::NOT_IMPLEMENTED,
-            WebPushError::TimeoutError => StatusCode::GATEWAY_TIMEOUT,
-            WebPushError::InvalidPackageName => unreachable!(), // firebase
-        };
-
-        err.short_description().with_status(status).into_response()
-    }
-}
-
-async fn push(mut cx: Context<App>) -> Result<StatusCode, PushError> {
-    let req: PushRequest = await!(cx.body_json()).map_err(|_| WebPushError::BadRequest(None))?;
+async fn push(mut cx: Context<App>) -> EndpointResult {
+    let req: PushRequest = await!(cx.body_json()).client_err()?;
     let app = cx.app_data();
 
-    let mut signature = VapidSignatureBuilder::from_pem(Cursor::new(&app.vapid), &req.sub)?;
-    signature.add_claim("sub", app.subject.clone());
+    let mut res: BTreeMap<String, &'static str> = BTreeMap::new();
 
-    let mut builder = WebPushMessageBuilder::new(&req.sub)?;
-    builder.set_ttl(req.ttl);
-    builder.set_payload(AesGcm, req.payload.as_bytes());
-    builder.set_vapid_signature(signature.build()?);
-    let message = builder.build()?;
+    for sub in &req.subs {
+        let result: Result<(), WebPushError> = try {
+            let mut signature = VapidSignatureBuilder::from_pem(Cursor::new(&app.vapid), sub)?;
+            signature.add_claim("sub", app.subject.clone());
 
-    let timeout = Duration::from_secs(15);
-    await!(app.client.send_with_timeout(message, timeout).compat())?;
-    Ok(StatusCode::NO_CONTENT)
+            let mut builder = WebPushMessageBuilder::new(sub)?;
+            builder.set_ttl(req.ttl);
+            builder.set_payload(AesGcm, req.payload.as_bytes());
+            builder.set_vapid_signature(signature.build()?);
+            let message = builder.build()?;
+
+            let timeout = Duration::from_secs(15);
+            await!(app.client.send_with_timeout(message, timeout).compat())?;
+        };
+
+        res.insert(sub.endpoint.clone(), result.err().map_or("ok", |e| e.short_description()));
+    }
+
+    Ok(response::json(res))
 }
 
 fn main() {

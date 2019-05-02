@@ -55,37 +55,43 @@ HTTP API
 
 ```javascript
 {
-  "sub": {
+  "subs": [{
     "endpoint": "https://fcm.googleapis.com/fcm/send/dpH5lCsTSSM:APA91bHqjZxM0VImWWqDRN7U0a3AycjUf4O-byuxb_wJsKRaKvV_iKw56s16ekq6FUqoCF7k2nICUpd8fHPxVTgqLunFeVeB9lLCQZyohyAztTH8ZQL9WCxKpA6dvTG_TUIhQUFq_n",
     "keys": {
       "p256dh": "BLQELIDm-6b9Bl07YrEuXJ4BL_YBVQ0dvt9NQGGJxIQidJWHPNa9YrouvcQ9d7_MqzvGS9Alz60SZNCG3qfpk=",
       "auth": "4vQK-SvRAN5eo-8ASlrwA=="
     }
-  },
+  }],
   "payload": "lorem ipsum", // could be json encoded as a string
   "ttl": 43200 // 12 hour limit to deliver
 }
 ```
 
-code | response | description
---- | --- | ---
-204 | | **success**
-400 | invalid_uri |
-... | invalid_ttl |
-... | missing_crypto_keys |
-... | invalid_crypto_keys |
-401 | unauthorized |
-404 | endpoint_not_found |
-410 | endpoint_not_valid | Subscription is invalid and will never be valid
-413 | payload_too_large |
-501 | not_implemented | Endpoint does not support encryption algorithm
-502 | tls_error | Endpoint misbehaving
-... | ssl_error |
-... | io_error |
-... | invalid_response |
-... | other |
-... | unspecified |
-504 | timeout_error | Request to endpoint timed out
+```javascript
+{
+  "https://fcm.googleapis.com/fcm/send/dpH5lCsTSSM:AP...": "ok"
+}
+```
+
+response | description
+--- | ---
+ok | **success**
+invalid_uri |
+invalid_ttl |
+missing_crypto_keys |
+invalid_crypto_keys |
+unauthorized |
+endpoint_not_found |
+endpoint_not_valid | Subscription is invalid and will never be valid
+payload_too_large |
+not_implemented | Endpoint does not support encryption algorithm
+tls_error | Endpoint misbehaving
+ssl_error | ...
+io_error | ...
+invalid_response | ...
+other | ...
+unspecified | ...
+timeout_error | Request to endpoint timed out
 
 License
 -------
