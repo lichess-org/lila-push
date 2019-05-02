@@ -1,7 +1,7 @@
 lila-push
 =========
 
-Web push microservice for lichess.org.
+Web push microservice for [lichess.org](https://lichess.org).
 
 Setup
 -----
@@ -26,8 +26,6 @@ Setup
 
 Usage
 -----
-
-Print private key:
 
 ```
 lila-push 0.1.0
