@@ -13,7 +13,7 @@ use structopt::StructOpt;
 use futures::compat::Future01CompatExt as _;
 use tide::{Context, EndpointResult, response};
 use tide::error::ResultExt;
-use tide::middleware::RootLogger;
+use tide_log::RequestLogger;
 use web_push::{WebPushClient, WebPushMessageBuilder, SubscriptionInfo, VapidSignatureBuilder, WebPushError};
 use web_push::ContentEncoding::AesGcm;
 
@@ -49,7 +49,7 @@ struct PushRequest {
 
 async fn push(mut cx: Context<App>) -> EndpointResult {
     let req: PushRequest = await!(cx.body_json()).client_err()?;
-    let app = cx.app_data();
+    let app = cx.state();
 
     let mut res: BTreeMap<String, &'static str> = BTreeMap::new();
 
@@ -84,8 +84,8 @@ fn main() {
         subject: opt.subject,
     };
 
-    let mut app = tide::App::new(app);
-    app.middleware(RootLogger::new());
+    let mut app = tide::App::with_state(app);
+    app.middleware(RequestLogger::new());
     app.at("/").post(push);
-    app.serve(bind).expect("bind");
+    app.run(bind).expect("bind");
 }
