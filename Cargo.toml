@@ -12,7 +12,7 @@ edition = "2018"
 [dependencies]
 tide = { git = "https://github.com/rustasync/tide" }
 tide-log = { git = "https://github.com/rustasync/tide" }
-structopt = "0.2"
+structopt = "0.3"
 web-push = "0.5"
 serde = { version = "1.0", features = ["derive"] }
-futures-preview = { version = "0.3.0-alpha.16", features = ["compat"] }
+futures-preview = { version = "0.3.0-alpha.17", features = ["compat"] }

@@ -1,4 +1,4 @@
-#![feature(async_await, await_macro, try_blocks)]
+#![feature(try_blocks)]
 
 #![warn(rust_2018_idioms)]
 
@@ -48,7 +48,7 @@ struct PushRequest {
 }
 
 async fn push(mut cx: Context<App>) -> EndpointResult {
-    let req: PushRequest = await!(cx.body_json()).client_err()?;
+    let req: PushRequest = cx.body_json().await.client_err()?;
     let app = cx.state();
 
     let mut res: BTreeMap<String, &'static str> = BTreeMap::new();
@@ -65,7 +65,7 @@ async fn push(mut cx: Context<App>) -> EndpointResult {
             let message = builder.build()?;
 
             let timeout = Duration::from_secs(15);
-            await!(app.client.send_with_timeout(message, timeout).compat())?;
+            app.client.send_with_timeout(message, timeout).compat().await?;
         };
 
         res.insert(sub.endpoint.clone(), result.err().map_or("ok", |e| e.short_description()));
