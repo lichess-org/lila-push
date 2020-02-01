@@ -4,16 +4,15 @@
 
 use serde::Deserialize;
 use std::collections::BTreeMap;
+use std::convert::Infallible;
 use std::fs;
 use std::io::Cursor;
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::time::Duration;
 use structopt::StructOpt;
-use futures::compat::Future01CompatExt as _;
-use tide::{Context, EndpointResult, response};
-use tide::error::ResultExt;
-use tide_log::RequestLogger;
+use tokio::time::timeout;
+use warp::Filter;
 use web_push::{WebPushClient, WebPushMessageBuilder, SubscriptionInfo, VapidSignatureBuilder, WebPushError};
 use web_push::ContentEncoding::AesGcm;
 
@@ -47,10 +46,7 @@ struct PushRequest {
     ttl: u32,
 }
 
-async fn push(mut cx: Context<App>) -> EndpointResult {
-    let req: PushRequest = cx.body_json().await.client_err()?;
-    let app = cx.state();
-
+async fn push(app: &App, req: PushRequest) -> Result<warp::reply::Json, Infallible> {
     let mut res: BTreeMap<String, &'static str> = BTreeMap::new();
 
     for sub in &req.subs {
@@ -64,28 +60,34 @@ async fn push(mut cx: Context<App>) -> EndpointResult {
             builder.set_vapid_signature(signature.build()?);
             let message = builder.build()?;
 
-            let timeout = Duration::from_secs(15);
-            app.client.send_with_timeout(message, timeout).compat().await?;
+            timeout(
+                Duration::from_secs(15),
+                app.client.send(message)
+            ).await.map_err(|_| WebPushError::Other("timeout".to_owned()))??;
         };
 
         res.insert(sub.endpoint.clone(), result.err().map_or("ok", |e| e.short_description()));
     }
 
-    Ok(response::json(res))
+    Ok(warp::reply::json(&res))
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let opt = Opt::from_args();
     let bind = SocketAddr::new(opt.address.parse().expect("valid address"), opt.port);
 
-    let app = App {
-        client: WebPushClient::new().expect("push client"),
+    let app: &'static App = Box::leak(Box::new(App {
+        client: WebPushClient::new(),
         vapid: fs::read(opt.vapid).expect("vapid key"),
         subject: opt.subject,
-    };
+    }));
 
-    let mut app = tide::App::with_state(app);
-    app.middleware(RequestLogger::new());
-    app.at("/").post(push);
-    app.run(bind).expect("bind");
+    let api = warp::post()
+        .map(move || app)
+        .and(warp::path::end())
+        .and(warp::body::json())
+        .and_then(push);
+
+    warp::serve(api).run(bind).await;
 }
