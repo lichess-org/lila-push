@@ -10,26 +10,26 @@ use std::io::Cursor;
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::time::Duration;
-use structopt::StructOpt;
+use clap::Clap;
 use tokio::time::timeout;
 use warp::Filter;
 use web_push::{WebPushClient, WebPushMessageBuilder, SubscriptionInfo, VapidSignatureBuilder, WebPushError};
 use web_push::ContentEncoding::AesGcm;
 
-#[derive(StructOpt, Debug)]
+#[derive(Clap, Debug)]
 struct Opt {
     /// PEM file with private VAPID key
-    #[structopt(long = "vapid", parse(from_os_str))]
+    #[clap(long = "vapid", parse(from_os_str))]
     vapid: PathBuf,
     /// VAPID subject (example: mailto:contact@lichess.org)
-    #[structopt(long = "subject")]
+    #[clap(long = "subject")]
     subject: String,
 
     /// Listen on this address
-    #[structopt(long = "address", default_value = "127.0.0.1")]
+    #[clap(long = "address", default_value = "127.0.0.1")]
     address: String,
     /// Listen on this port
-    #[structopt(long = "port", default_value = "9054")]
+    #[clap(long = "port", default_value = "9054")]
     port: u16,
 }
 
@@ -74,7 +74,7 @@ async fn push(app: &App, req: PushRequest) -> Result<warp::reply::Json, Infallib
 
 #[tokio::main]
 async fn main() {
-    let opt = Opt::from_args();
+    let opt = Opt::parse();
     let bind = SocketAddr::new(opt.address.parse().expect("valid address"), opt.port);
 
     let app: &'static App = Box::leak(Box::new(App {
