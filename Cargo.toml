@@ -10,7 +10,7 @@ authors = ["Niklas Fiekas <niklas.fiekas@backscattering.de>"]
 edition = "2018"
 
 [dependencies]
-warp = { version = "0.2", default-features = false }
+warp = { version = "0.3", default-features = false }
 tokio = { version = "0.2", features = ["macros"] }
 clap = { version = "3.0.0-beta.2" }
 web-push = "0.7"
