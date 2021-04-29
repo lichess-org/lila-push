@@ -11,7 +11,7 @@ edition = "2018"
 
 [dependencies]
 warp = { version = "0.2", default-features = false }
-tokio = { version = "0.2", features = ["macros"] }
+tokio = { version = "1.5", features = ["macros"] }
 clap = { version = "3.0.0-beta.2" }
 web-push = "0.7"
 serde = { version = "1", features = ["derive"] }
