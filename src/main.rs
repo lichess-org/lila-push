@@ -14,7 +14,7 @@ use clap::Clap;
 use tokio::time::timeout;
 use warp::Filter;
 use web_push::{WebPushClient, WebPushMessageBuilder, SubscriptionInfo, VapidSignatureBuilder, WebPushError};
-use web_push::ContentEncoding::AesGcm;
+use web_push::ContentEncoding::Aes128Gcm;
 
 #[derive(Clap, Debug)]
 struct Opt {
@@ -56,7 +56,7 @@ async fn push(app: &App, req: PushRequest) -> Result<warp::reply::Json, Infallib
 
             let mut builder = WebPushMessageBuilder::new(sub)?;
             builder.set_ttl(req.ttl);
-            builder.set_payload(AesGcm, req.payload.as_bytes());
+            builder.set_payload(Aes128Gcm, req.payload.as_bytes());
             builder.set_vapid_signature(signature.build()?);
             let message = builder.build()?;
 
@@ -78,7 +78,7 @@ async fn main() {
     let bind = SocketAddr::new(opt.address.parse().expect("valid address"), opt.port);
 
     let app: &'static App = Box::leak(Box::new(App {
-        client: WebPushClient::new(),
+        client: WebPushClient::new().expect("web push client"),
         vapid: fs::read(opt.vapid).expect("vapid key"),
         subject: opt.subject,
     }));
