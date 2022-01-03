@@ -1,18 +1,18 @@
 [package]
 name = "lila-push"
-version = "0.1.0"
+version = "1.0.0"
 publish = false
 description = "Web push microservice for lichess.org"
 repository = "https://github.com/niklasf/lila-push"
 readme = "README.md"
 license = "AGPL-3.0+"
 authors = ["Niklas Fiekas <niklas.fiekas@backscattering.de>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 warp = { version = "0.3", default-features = false }
 tokio = { version = "1", features = ["full"] }
-clap = { version = "3.0.0-beta.4" }
+clap = { version = "3", features = ["derive"] }
 web-push = { version = "0.9", features = ["hyper-client"], default-features = false }
 serde = { version = "1", features = ["derive"] }
 openssl = { version = "0.10", features = ["vendored"] }

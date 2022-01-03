@@ -1,36 +1,31 @@
 #![feature(try_blocks)]
 
-#![warn(rust_2018_idioms)]
+use std::{
+    collections::BTreeMap, convert::Infallible, fs, io::Cursor, net::SocketAddr, path::PathBuf,
+    time::Duration,
+};
 
+use clap::Parser;
 use serde::Deserialize;
-use std::collections::BTreeMap;
-use std::convert::Infallible;
-use std::fs;
-use std::io::Cursor;
-use std::net::SocketAddr;
-use std::path::PathBuf;
-use std::time::Duration;
-use clap::Clap;
 use tokio::time::timeout;
 use warp::Filter;
-use web_push::{WebPushClient, WebPushMessageBuilder, SubscriptionInfo, VapidSignatureBuilder, WebPushError};
-use web_push::ContentEncoding::Aes128Gcm;
+use web_push::{
+    ContentEncoding::Aes128Gcm, SubscriptionInfo, VapidSignatureBuilder, WebPushClient,
+    WebPushError, WebPushMessageBuilder,
+};
 
-#[derive(Clap, Debug)]
+#[derive(Parser, Debug)]
 struct Opt {
     /// PEM file with private VAPID key
-    #[clap(long = "vapid", parse(from_os_str))]
+    #[clap(long, parse(from_os_str))]
     vapid: PathBuf,
     /// VAPID subject (example: mailto:contact@lichess.org)
-    #[clap(long = "subject")]
+    #[clap(long)]
     subject: String,
 
-    /// Listen on this address
-    #[clap(long = "address", default_value = "127.0.0.1")]
-    address: String,
-    /// Listen on this port
-    #[clap(long = "port", default_value = "9054")]
-    port: u16,
+    /// Listen on this socket address
+    #[clap(long, default_value = "127.0.0.1:9054")]
+    bind: SocketAddr,
 }
 
 struct App {
@@ -60,13 +55,15 @@ async fn push(app: &App, req: PushRequest) -> Result<warp::reply::Json, Infallib
             builder.set_vapid_signature(signature.build()?);
             let message = builder.build()?;
 
-            timeout(
-                Duration::from_secs(15),
-                app.client.send(message)
-            ).await.map_err(|_| WebPushError::Other("timeout".to_owned()))??;
+            timeout(Duration::from_secs(15), app.client.send(message))
+                .await
+                .map_err(|_| WebPushError::Other("timeout".to_owned()))??;
         };
 
-        res.insert(sub.endpoint.clone(), result.err().map_or("ok", |e| e.short_description()));
+        res.insert(
+            sub.endpoint.clone(),
+            result.err().map_or("ok", |e| e.short_description()),
+        );
     }
 
     Ok(warp::reply::json(&res))
@@ -75,7 +72,6 @@ async fn push(app: &App, req: PushRequest) -> Result<warp::reply::Json, Infallib
 #[tokio::main]
 async fn main() {
     let opt = Opt::parse();
-    let bind = SocketAddr::new(opt.address.parse().expect("valid address"), opt.port);
 
     let app: &'static App = Box::leak(Box::new(App {
         client: WebPushClient::new().expect("web push client"),
@@ -89,5 +85,5 @@ async fn main() {
         .and(warp::body::json())
         .and_then(push);
 
-    warp::serve(api).run(bind).await;
+    warp::serve(api).run(opt.bind).await;
 }
