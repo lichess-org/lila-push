@@ -7,10 +7,11 @@ repository = "https://github.com/lichess-org/lila-push"
 readme = "README.md"
 license = "AGPL-3.0+"
 authors = ["Niklas Fiekas <niklas.fiekas@backscattering.de>"]
+keywords = ["web-push", "vapid", "lichess"]
 edition = "2021"
 
 [dependencies]
-warp = { version = "0.3", default-features = false }
+axum = "0.4"
 tokio = { version = "1", features = ["full"] }
 clap = { version = "3", features = ["derive"] }
 web-push = { version = "0.9", features = ["hyper-client"], default-features = false }

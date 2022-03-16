@@ -1,14 +1,11 @@
 #![feature(try_blocks)]
 
-use std::{
-    collections::BTreeMap, convert::Infallible, fs, io::Cursor, net::SocketAddr, path::PathBuf,
-    time::Duration,
-};
+use std::{collections::BTreeMap, fs, io::Cursor, net::SocketAddr, path::PathBuf, time::Duration};
 
+use axum::{routing::post, Json, Router};
 use clap::Parser;
 use serde::Deserialize;
 use tokio::time::timeout;
-use warp::Filter;
 use web_push::{
     ContentEncoding::Aes128Gcm, SubscriptionInfo, VapidSignatureBuilder, WebPushClient,
     WebPushError, WebPushMessageBuilder,
@@ -16,14 +13,14 @@ use web_push::{
 
 #[derive(Parser, Debug)]
 struct Opt {
-    /// PEM file with private VAPID key
+    /// PEM file with private VAPID key.
     #[clap(long, parse(from_os_str))]
     vapid: PathBuf,
-    /// VAPID subject (example: mailto:contact@lichess.org)
+    /// VAPID subject (example: mailto:contact@lichess.org).
     #[clap(long)]
     subject: String,
 
-    /// Listen on this socket address
+    /// Listen on this socket address.
     #[clap(long, default_value = "127.0.0.1:9054")]
     bind: SocketAddr,
 }
@@ -41,7 +38,10 @@ struct PushRequest {
     ttl: u32,
 }
 
-async fn push(app: &App, req: PushRequest) -> Result<warp::reply::Json, Infallible> {
+async fn push(
+    app: &'static App,
+    Json(req): Json<PushRequest>,
+) -> Json<BTreeMap<String, &'static str>> {
     let mut res: BTreeMap<String, &'static str> = BTreeMap::new();
 
     for sub in &req.subs {
@@ -66,7 +66,7 @@ async fn push(app: &App, req: PushRequest) -> Result<warp::reply::Json, Infallib
         );
     }
 
-    Ok(warp::reply::json(&res))
+    Json(res)
 }
 
 #[tokio::main]
@@ -79,11 +79,10 @@ async fn main() {
         subject: opt.subject,
     }));
 
-    let api = warp::post()
-        .map(move || app)
-        .and(warp::path::end())
-        .and(warp::body::json())
-        .and_then(push);
+    let app = Router::new().route("/", post(move |req| push(app, req)));
 
-    warp::serve(api).run(opt.bind).await;
+    axum::Server::bind(&opt.bind)
+        .serve(app.into_make_service())
+        .await
+        .expect("bind");
 }
