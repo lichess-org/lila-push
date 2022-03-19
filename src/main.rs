@@ -44,17 +44,20 @@ async fn push(
 ) -> Json<BTreeMap<String, &'static str>> {
     let mut res: BTreeMap<String, &'static str> = BTreeMap::new();
 
-    for sub in &req.subs {
+    let mut oks = 0usize;
+    let mut errs = 0usize;
+
+    for sub in req.subs {
         let result: Result<(), WebPushError> = try {
-            let mut signature = VapidSignatureBuilder::from_pem(Cursor::new(&app.vapid), sub)?;
+            let mut signature = VapidSignatureBuilder::from_pem(Cursor::new(&app.vapid), &sub)?;
             signature.add_claim("sub", app.subject.clone());
 
-            let mut builder = WebPushMessageBuilder::new(sub)?;
+            let mut builder = WebPushMessageBuilder::new(&sub)?;
             builder.set_ttl(req.ttl);
             builder.set_payload(Aes128Gcm, req.payload.as_bytes());
             builder.set_vapid_signature(signature.build()?);
-            let message = builder.build()?;
 
+            let message = builder.build()?;
             timeout(Duration::from_secs(15), app.client.send(message))
                 .await
                 .map_err(|_| WebPushError::Other("timeout".to_owned()))??;
@@ -62,15 +65,37 @@ async fn push(
 
         res.insert(
             sub.endpoint.clone(),
-            result.err().map_or("ok", |e| e.short_description()),
+            match result {
+                Ok(()) => {
+                    oks += 1;
+                    "ok"
+                }
+                Err(e) => {
+                    errs += 1;
+                    log::warn!("{}: {}", sub.endpoint, e.short_description());
+                    e.short_description()
+                }
+            },
         );
     }
+
+    log::info!("=> {} ok, {} errors", oks, errs);
 
     Json(res)
 }
 
 #[tokio::main]
 async fn main() {
+    env_logger::Builder::from_env(
+        env_logger::Env::new()
+            .filter("PUSH_LOG")
+            .write_style("PUSH_LOG_STYLE"),
+    )
+    .format_timestamp(None)
+    .format_module_path(false)
+    .format_target(false)
+    .init();
+
     let opt = Opt::parse();
 
     let app: &'static App = Box::leak(Box::new(App {
