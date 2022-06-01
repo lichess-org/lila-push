@@ -1,5 +1,3 @@
-#![feature(try_blocks)]
-
 use std::{collections::BTreeMap, fs, io::Cursor, net::SocketAddr, path::PathBuf, time::Duration};
 
 use axum::{routing::post, Json, Router};
@@ -34,8 +32,28 @@ struct App {
 #[derive(Deserialize, Debug)]
 struct PushRequest {
     subs: Vec<SubscriptionInfo>,
+    #[serde(flatten)]
+    push: Push,
+}
+
+#[derive(Deserialize, Debug)]
+struct Push {
     payload: String,
     ttl: u32,
+}
+
+async fn push_single(app: &App, sub: &SubscriptionInfo, push: &Push) -> Result<(), WebPushError> {
+    let mut signature = VapidSignatureBuilder::from_pem(Cursor::new(&app.vapid), &sub)?;
+    signature.add_claim("sub", app.subject.clone());
+
+    let mut builder = WebPushMessageBuilder::new(sub)?;
+    builder.set_ttl(push.ttl);
+    builder.set_payload(Aes128Gcm, push.payload.as_bytes());
+    builder.set_vapid_signature(signature.build()?);
+
+    timeout(Duration::from_secs(15), app.client.send(builder.build()?))
+        .await
+        .map_err(|_| WebPushError::Other("timeout".to_owned()))?
 }
 
 async fn push(
@@ -47,25 +65,10 @@ async fn push(
     let mut oks = 0usize;
     let mut errs = 0usize;
 
-    for sub in req.subs {
-        let result: Result<(), WebPushError> = try {
-            let mut signature = VapidSignatureBuilder::from_pem(Cursor::new(&app.vapid), &sub)?;
-            signature.add_claim("sub", app.subject.clone());
-
-            let mut builder = WebPushMessageBuilder::new(&sub)?;
-            builder.set_ttl(req.ttl);
-            builder.set_payload(Aes128Gcm, req.payload.as_bytes());
-            builder.set_vapid_signature(signature.build()?);
-
-            let message = builder.build()?;
-            timeout(Duration::from_secs(15), app.client.send(message))
-                .await
-                .map_err(|_| WebPushError::Other("timeout".to_owned()))??;
-        };
-
+    for sub in &req.subs {
         res.insert(
             sub.endpoint.clone(),
-            match result {
+            match push_single(app, sub, &req.push).await {
                 Ok(()) => {
                     oks += 1;
                     "ok"
