@@ -43,7 +43,7 @@ struct Push {
 }
 
 async fn push_single(app: &App, sub: &SubscriptionInfo, push: &Push) -> Result<(), WebPushError> {
-    let mut signature = VapidSignatureBuilder::from_pem(Cursor::new(&app.vapid), &sub)?;
+    let mut signature = VapidSignatureBuilder::from_pem(Cursor::new(&app.vapid), sub)?;
     signature.add_claim("sub", app.subject.clone());
 
     let mut builder = WebPushMessageBuilder::new(sub)?;
