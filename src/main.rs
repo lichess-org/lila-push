@@ -1,7 +1,7 @@
 use std::{collections::BTreeMap, fs, io::Cursor, net::SocketAddr, path::PathBuf, time::Duration};
 
 use axum::{routing::post, Json, Router};
-use clap::Parser;
+use clap::{builder::PathBufValueParser, Parser};
 use serde::Deserialize;
 use tokio::time::timeout;
 use web_push::{
@@ -12,14 +12,14 @@ use web_push::{
 #[derive(Parser, Debug)]
 struct Opt {
     /// PEM file with private VAPID key.
-    #[clap(long, parse(from_os_str))]
+    #[arg(long, value_parser = PathBufValueParser::new())]
     vapid: PathBuf,
     /// VAPID subject (example: mailto:contact@lichess.org).
-    #[clap(long)]
+    #[arg(long)]
     subject: String,
 
     /// Listen on this socket address.
-    #[clap(long, default_value = "127.0.0.1:9054")]
+    #[arg(long, default_value = "127.0.0.1:9054")]
     bind: SocketAddr,
 }
 

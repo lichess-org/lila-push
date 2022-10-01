@@ -12,7 +12,7 @@ edition = "2021"
 
 [dependencies]
 axum = "0.5"
-clap = { version = "3", features = ["derive"] }
+clap = { version = "4", features = ["derive", "deprecated"] }
 env_logger = "0.9"
 log = "0.4"
 hyper-tls = { version = "0.5", features = ["vendored"] }
