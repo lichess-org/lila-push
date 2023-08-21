@@ -5,8 +5,8 @@ use clap::{builder::PathBufValueParser, Parser};
 use serde::Deserialize;
 use tokio::time::timeout;
 use web_push::{
-    ContentEncoding::Aes128Gcm, SubscriptionInfo, VapidSignatureBuilder, WebPushClient,
-    WebPushError, WebPushMessageBuilder,
+    ContentEncoding::Aes128Gcm, HyperWebPushClient, SubscriptionInfo, VapidSignatureBuilder,
+    WebPushClient, WebPushError, WebPushMessageBuilder,
 };
 
 #[derive(Parser, Debug)]
@@ -24,7 +24,7 @@ struct Opt {
 }
 
 struct App {
-    client: WebPushClient,
+    client: HyperWebPushClient,
     vapid: Vec<u8>,
     subject: String,
 }
@@ -46,7 +46,7 @@ async fn push_single(app: &App, sub: &SubscriptionInfo, push: &Push) -> Result<(
     let mut signature = VapidSignatureBuilder::from_pem(Cursor::new(&app.vapid), sub)?;
     signature.add_claim("sub", app.subject.clone());
 
-    let mut builder = WebPushMessageBuilder::new(sub)?;
+    let mut builder = WebPushMessageBuilder::new(sub);
     builder.set_ttl(push.ttl);
     builder.set_payload(Aes128Gcm, push.payload.as_bytes());
     builder.set_vapid_signature(signature.build()?);
@@ -102,7 +102,7 @@ async fn main() {
     let opt = Opt::parse();
 
     let app: &'static App = Box::leak(Box::new(App {
-        client: WebPushClient::new().expect("web push client"),
+        client: HyperWebPushClient::new(),
         vapid: fs::read(opt.vapid).expect("vapid key"),
         subject: opt.subject,
     }));
