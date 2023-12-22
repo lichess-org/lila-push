@@ -5,8 +5,8 @@ use clap::{builder::PathBufValueParser, Parser};
 use serde::Deserialize;
 use tokio::{net::TcpListener, time::timeout};
 use web_push::{
-    ContentEncoding::Aes128Gcm, HyperWebPushClient, SubscriptionInfo, VapidSignatureBuilder,
-    WebPushClient, WebPushError, WebPushMessageBuilder,
+    ContentEncoding::Aes128Gcm, HyperWebPushClient, SubscriptionInfo, Urgency,
+    VapidSignatureBuilder, WebPushClient, WebPushError, WebPushMessageBuilder,
 };
 
 #[derive(Parser, Debug)]
@@ -40,6 +40,10 @@ struct PushRequest {
 struct Push {
     payload: String,
     ttl: u32,
+    #[serde(default)]
+    urgency: Option<Urgency>,
+    #[serde(default)]
+    topic: Option<String>,
 }
 
 async fn push_single(app: &App, sub: &SubscriptionInfo, push: &Push) -> Result<(), WebPushError> {
@@ -47,8 +51,14 @@ async fn push_single(app: &App, sub: &SubscriptionInfo, push: &Push) -> Result<(
     signature.add_claim("sub", app.subject.clone());
 
     let mut builder = WebPushMessageBuilder::new(sub);
-    builder.set_ttl(push.ttl);
     builder.set_payload(Aes128Gcm, push.payload.as_bytes());
+    builder.set_ttl(push.ttl);
+    if let Some(urgency) = push.urgency {
+        builder.set_urgency(urgency);
+    }
+    if let Some(ref topic) = push.topic {
+        builder.set_topic(topic.to_owned());
+    }
     builder.set_vapid_signature(signature.build()?);
 
     timeout(Duration::from_secs(15), app.client.send(builder.build()?))
