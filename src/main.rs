@@ -3,7 +3,7 @@ use std::{collections::BTreeMap, fs, io::Cursor, net::SocketAddr, path::PathBuf,
 use axum::{routing::post, Json, Router};
 use clap::{builder::PathBufValueParser, Parser};
 use serde::Deserialize;
-use tokio::time::timeout;
+use tokio::{net::TcpListener, time::timeout};
 use web_push::{
     ContentEncoding::Aes128Gcm, HyperWebPushClient, SubscriptionInfo, VapidSignatureBuilder,
     WebPushClient, WebPushError, WebPushMessageBuilder,
@@ -109,8 +109,6 @@ async fn main() {
 
     let app = Router::new().route("/", post(move |req| push(app, req)));
 
-    axum::Server::bind(&opt.bind)
-        .serve(app.into_make_service())
-        .await
-        .expect("bind");
+    let listener = TcpListener::bind(&opt.bind).await.expect("bind");
+    axum::serve(listener, app).await.expect("serve");
 }

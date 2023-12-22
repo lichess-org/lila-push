@@ -11,11 +11,11 @@ keywords = ["web-push", "vapid", "lichess"]
 edition = "2021"
 
 [dependencies]
-axum = "0.6"
+axum = "0.7"
 clap = { version = "4", features = ["derive", "deprecated"] }
 env_logger = "0.10"
 log = "0.4"
-hyper-tls = { version = "0.5", features = ["vendored"] }
+hyper-tls = { version = "0.5", features = ["vendored"] } # matching web-push
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
 web-push = { version = "0.10", features = ["hyper-client"], default-features = false }
