@@ -53,9 +53,9 @@ async fn push_single(app: &App, sub: &SubscriptionInfo, push: &Push) -> Result<(
     let mut builder = WebPushMessageBuilder::new(sub);
     builder.set_payload(Aes128Gcm, push.payload.as_bytes());
     builder.set_ttl(push.ttl);
-    if let Some(urgency) = push.urgency {
-        builder.set_urgency(urgency);
-    }
+    //if let Some(urgency) = push.urgency {
+    //    builder.set_urgency(urgency);
+    //}
     if let Some(ref topic) = push.topic {
         builder.set_topic(topic.to_owned());
     }
@@ -86,11 +86,12 @@ async fn push(
                 Err(e) => {
                     errs += 1;
                     log::warn!(
-                        "{}: {} (topic={:?}, urgency={:?})",
+                        "{}: {} (topic={:?}, urgency={:?}, error={:?})",
                         sub.endpoint,
                         e.short_description(),
                         req.push.topic,
-                        req.push.urgency
+                        req.push.urgency,
+                        e
                     );
                     e.short_description()
                 }
