@@ -2081,7 +2081,7 @@ checksum = "7ab9b36309365056cd639da3134bf87fa8f3d86008abf99e612384a6eecd459f"
 [[package]]
 name = "web-push"
 version = "0.10.0"
-source = "git+https://github.com/pimeys/rust-web-push.git#836e018bfb97f9c697a64f391a79067806b69e20"
+source = "git+https://github.com/niklasf/rust-web-push.git?branch=debug-bad-request#995bc9de4a7977f256fdf909be30ada123769a24"
 dependencies = [
  "async-trait",
  "base64",

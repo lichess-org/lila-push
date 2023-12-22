@@ -1,4 +1,6 @@
-use std::{collections::BTreeMap, fs, io::Cursor, net::SocketAddr, path::PathBuf, time::Duration};
+use std::{
+    cmp::max, collections::BTreeMap, fs, io::Cursor, net::SocketAddr, path::PathBuf, time::Duration,
+};
 
 use axum::{routing::post, Json, Router};
 use clap::{builder::PathBufValueParser, Parser};
@@ -53,9 +55,9 @@ async fn push_single(app: &App, sub: &SubscriptionInfo, push: &Push) -> Result<(
     let mut builder = WebPushMessageBuilder::new(sub);
     builder.set_payload(Aes128Gcm, push.payload.as_bytes());
     builder.set_ttl(push.ttl);
-    //if let Some(urgency) = push.urgency {
-    //    builder.set_urgency(urgency);
-    //}
+    if let Some(urgency) = push.urgency {
+        builder.set_urgency(max(Urgency::Low, urgency)); // fcm does not support very-low
+    }
     if let Some(ref topic) = push.topic {
         builder.set_topic(topic.to_owned());
     }

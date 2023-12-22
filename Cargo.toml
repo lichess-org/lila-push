@@ -18,4 +18,4 @@ log = "0.4"
 hyper-tls = { version = "0.5", features = ["vendored"] } # matching web-push
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
-web-push = { version = "0.10", git = "https://github.com/pimeys/rust-web-push.git", features = ["hyper-client"], default-features = false }
+web-push = { version = "0.10", git = "https://github.com/niklasf/rust-web-push.git", branch = "debug-bad-request", features = ["hyper-client"], default-features = false }
