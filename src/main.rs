@@ -87,14 +87,7 @@ async fn push(
                 }
                 Err(e) => {
                     errs += 1;
-                    log::warn!(
-                        "{}: {} (topic={:?}, urgency={:?}, error={:?})",
-                        sub.endpoint,
-                        e.short_description(),
-                        req.push.topic,
-                        req.push.urgency,
-                        e
-                    );
+                    log::warn!("{}: {:?}", sub.endpoint, e);
                     e.short_description()
                 }
             },
