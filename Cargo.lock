@@ -2081,8 +2081,7 @@ checksum = "4f186bd2dcf04330886ce82d6f33dd75a7bfcf69ecf5763b89fcde53b6ac9838"
 [[package]]
 name = "web-push"
 version = "0.10.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b5c5c6deab45e8820b77c9c8ae168f1ded4595767c746584bb67b9100f2b71d"
+source = "git+https://github.com/niklasf/rust-web-push.git?branch=error-info#a184034d7c3e3f77b7606f59e5293b46dc96511b"
 dependencies = [
  "async-trait",
  "base64 0.13.1",

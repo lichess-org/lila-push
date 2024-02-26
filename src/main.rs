@@ -63,9 +63,7 @@ async fn push_single(app: &App, sub: &SubscriptionInfo, push: &Push) -> Result<(
     }
     builder.set_vapid_signature(signature.build()?);
 
-    timeout(Duration::from_secs(15), app.client.send(builder.build()?))
-        .await
-        .map_err(|_| WebPushError::Other("timeout".to_owned()))?
+    app.client.send(builder.build()?).await
 }
 
 async fn push(
@@ -80,15 +78,20 @@ async fn push(
     for sub in &req.subs {
         res.insert(
             sub.endpoint.clone(),
-            match push_single(app, sub, &req.push).await {
-                Ok(()) => {
+            match timeout(Duration::from_secs(15), push_single(app, sub, &req.push)).await {
+                Ok(Ok(())) => {
                     oks += 1;
                     "ok"
                 }
-                Err(e) => {
+                Ok(Err(e)) => {
                     errs += 1;
                     log::warn!("{}: {:?}", sub.endpoint, e);
                     e.short_description()
+                }
+                Err(timeout) => {
+                    errs += 1;
+                    log::error!("{}: {:?}", sub.endpoint, timeout);
+                    "timeout"
                 }
             },
         );
