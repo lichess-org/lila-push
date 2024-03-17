@@ -40,8 +40,7 @@ FLAGS:
     -V, --version    Prints version information
 
 OPTIONS:
-        --address <address>    Listen on this address [default: 127.0.0.1]
-        --port <port>          Listen on this port [default: 9054]
+        --bind <address:port>  Listen on this address and port [default: 127.0.0.1:9054]
         --subject <subject>    VAPID subject (example: mailto:contact@lichess.org)
         --vapid <vapid>        PEM file with private VAPID key
 ```
