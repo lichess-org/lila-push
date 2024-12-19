@@ -985,7 +985,6 @@ dependencies = [
  "axum",
  "clap",
  "env_logger",
- "hyper-tls",
  "listenfd",
  "log",
  "serde",
