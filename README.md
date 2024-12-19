@@ -21,29 +21,15 @@ Setup
 3. Run microservice:
 
    ```
-   cargo run --release -- --vapid private.pem --subject mailto:contact@lichess.org
+   cargo run --release -- --vapid private.pem --vapid-subject mailto:contact@lichess.org
    ```
 
 Usage
 -----
 
 ```
-lila-push 0.1.0
-Niklas Fiekas <niklas.fiekas@backscattering.de>
-Web push microservice for lichess.org
-
-USAGE:
-    lila-push [OPTIONS] --subject <subject> --vapid <vapid>
-
-FLAGS:
-    -h, --help       Prints help information
-    -V, --version    Prints version information
-
-OPTIONS:
-        --bind <address:port>  Listen on this address and port [default: 127.0.0.1:9054]
-        --subject <subject>    VAPID subject (example: mailto:contact@lichess.org)
-        --vapid <vapid>        PEM file with private VAPID key
-```
+cargo run -- --help
+``
 
 HTTP API
 --------
@@ -64,7 +50,7 @@ HTTP API
 }
 ```
 
-```javascript
+```json
 {
   "https://fcm.googleapis.com/fcm/send/dpH5lCsTSSM:AP...": "ok"
 }
@@ -73,21 +59,9 @@ HTTP API
 response | description
 --- | ---
 ok | **success**
-invalid_uri |
-invalid_ttl |
-missing_crypto_keys |
-invalid_crypto_keys |
-unauthorized |
-endpoint_not_found |
 endpoint_not_valid | Subscription is invalid and will never be valid
-payload_too_large |
 not_implemented | Endpoint does not support encryption algorithm
-tls_error | Endpoint misbehaving
-ssl_error | ...
-io_error | ...
-invalid_response | ...
-other | ...
-unspecified | ...
+... | Other errors
 
 License
 -------
