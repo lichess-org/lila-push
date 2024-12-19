@@ -29,7 +29,7 @@ Usage
 
 ```
 cargo run -- --help
-``
+```
 
 HTTP API
 --------
