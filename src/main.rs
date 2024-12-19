@@ -1,5 +1,5 @@
 use std::{
-    cmp::max, collections::BTreeMap, fs, io::Cursor, net::SocketAddr, path::PathBuf, time::Duration,
+    cmp::max, collections::BTreeMap, fs::File, net::SocketAddr, path::PathBuf, time::Duration,
 };
 
 use axum::{routing::post, Json, Router};
@@ -7,8 +7,8 @@ use clap::{builder::PathBufValueParser, Parser};
 use serde::Deserialize;
 use tokio::{net::TcpListener, time::timeout};
 use web_push::{
-    ContentEncoding::Aes128Gcm, HyperWebPushClient, SubscriptionInfo, Urgency,
-    VapidSignatureBuilder, WebPushClient, WebPushError, WebPushMessageBuilder,
+    ContentEncoding::Aes128Gcm, HyperWebPushClient, PartialVapidSignatureBuilder, SubscriptionInfo,
+    Urgency, VapidSignatureBuilder, WebPushClient, WebPushError, WebPushMessageBuilder,
 };
 
 #[derive(Parser, Debug)]
@@ -17,8 +17,8 @@ struct Opt {
     #[arg(long, value_parser = PathBufValueParser::new())]
     vapid: PathBuf,
     /// VAPID subject (example: mailto:contact@lichess.org).
-    #[arg(long)]
-    subject: String,
+    #[arg(long, alias = "subject")]
+    vapid_subject: String,
 
     /// Listen on this socket address.
     #[arg(long, default_value = "127.0.0.1:9054")]
@@ -27,8 +27,8 @@ struct Opt {
 
 struct App {
     client: HyperWebPushClient,
-    vapid: Vec<u8>,
-    subject: String,
+    vapid_subject: String,
+    vapid_signature_builder: PartialVapidSignatureBuilder,
 }
 
 #[derive(Deserialize, Debug)]
@@ -49,9 +49,6 @@ struct Push {
 }
 
 async fn push_single(app: &App, sub: &SubscriptionInfo, push: &Push) -> Result<(), WebPushError> {
-    let mut signature = VapidSignatureBuilder::from_pem(Cursor::new(&app.vapid), sub)?;
-    signature.add_claim("sub", app.subject.clone());
-
     let mut builder = WebPushMessageBuilder::new(sub);
     builder.set_payload(Aes128Gcm, push.payload.as_bytes());
     builder.set_ttl(push.ttl);
@@ -61,7 +58,10 @@ async fn push_single(app: &App, sub: &SubscriptionInfo, push: &Push) -> Result<(
     if let Some(ref topic) = push.topic {
         builder.set_topic(topic.to_owned());
     }
-    builder.set_vapid_signature(signature.build()?);
+
+    let mut signature_builder = app.vapid_signature_builder.clone().add_sub_info(sub);
+    signature_builder.add_claim("sub", app.vapid_subject.clone());
+    builder.set_vapid_signature(signature_builder.build()?);
 
     app.client.send(builder.build()?).await
 }
@@ -78,7 +78,7 @@ async fn push(
     for sub in &req.subs {
         res.insert(
             sub.endpoint.clone(),
-            match timeout(Duration::from_secs(15), push_single(app, sub, &req.push)).await {
+            match timeout(Duration::from_secs(10), push_single(app, sub, &req.push)).await {
                 Ok(Ok(())) => {
                     oks += 1;
                     "ok"
@@ -118,8 +118,11 @@ async fn main() {
 
     let app: &'static App = Box::leak(Box::new(App {
         client: HyperWebPushClient::new(),
-        vapid: fs::read(opt.vapid).expect("vapid key"),
-        subject: opt.subject,
+        vapid_subject: opt.vapid_subject,
+        vapid_signature_builder: VapidSignatureBuilder::from_pem_no_sub(
+            File::open(opt.vapid).expect("open vapid pem"),
+        )
+        .expect("read vapid pem"),
     }));
 
     let app = Router::new().route("/", post(move |req| push(app, req)));
