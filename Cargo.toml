@@ -1,12 +1,10 @@
 [package]
 name = "lila-push"
-version = "1.0.0"
 publish = false
 description = "Web push microservice for lichess.org"
 repository = "https://github.com/lichess-org/lila-push"
 readme = "README.md"
 license = "AGPL-3.0+"
-authors = ["Niklas Fiekas <niklas.fiekas@backscattering.de>"]
 keywords = ["web-push", "vapid", "lichess"]
 edition = "2021"
 
@@ -15,7 +13,7 @@ axum = "0.7"
 clap = { version = "4", features = ["derive", "deprecated"] }
 env_logger = "0.11"
 log = "0.4"
-hyper-tls = { version = "0.5", features = ["vendored"] } # matching web-push
+hyper-tls = "0.5"
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
-web-push = { git = "https://github.com/niklasf/rust-web-push.git", branch = "error-info", features = ["hyper-client"], default-features = false }
+web-push = { git = "https://github.com/niklasf/rust-web-push.git", branch = "lichess", features = ["hyper-client"], default-features = false }
