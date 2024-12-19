@@ -4,6 +4,7 @@ use std::{
 
 use axum::{routing::post, Json, Router};
 use clap::{builder::PathBufValueParser, Parser};
+use listenfd::ListenFd;
 use serde::Deserialize;
 use tokio::{net::TcpListener, time::timeout};
 use web_push::{
@@ -127,6 +128,16 @@ async fn main() {
 
     let app = Router::new().route("/", post(move |req| push(app, req)));
 
-    let listener = TcpListener::bind(&opt.bind).await.expect("bind");
+    let listener = match ListenFd::from_env()
+        .take_tcp_listener(0)
+        .expect("tcp listener")
+    {
+        Some(std_listener) => {
+            std_listener.set_nonblocking(true).expect("set nonblocking");
+            TcpListener::from_std(std_listener).expect("listener")
+        }
+        None => TcpListener::bind(&opt.bind).await.expect("bind"),
+    };
+
     axum::serve(listener, app).await.expect("serve");
 }

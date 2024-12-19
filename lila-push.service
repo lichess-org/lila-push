@@ -1,0 +1,12 @@
+[Unit]
+Description=Web push server
+After=network.target
+
+[Service]
+Environment=PUSH_LOG=lila_push=info
+ExecStart=/usr/local/bin/lila-push --bind 172.16.0.28:9054 --vapid /etc/lila-push.pem --vapid-subject mailto:contact@lichess.org
+PrivateDevices=true
+ProtectSystem=strict
+CapabilityBoundingSet=
+NoNewPrivileges=true
+Restart=always
