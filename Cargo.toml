@@ -13,7 +13,7 @@ axum = "0.8.0-rc.1"
 clap = { version = "4", features = ["derive", "deprecated"] }
 env_logger = "0.11"
 log = "0.4"
-hyper-tls = "0.5"
+hyper-tls = "0.6"
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
 web-push = { git = "https://github.com/niklasf/rust-web-push.git", branch = "lichess", features = ["hyper-client"], default-features = false }
