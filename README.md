@@ -59,7 +59,8 @@ HTTP API
 response | description
 --- | ---
 ok | **success**
-endpoint_not_valid | Subscription is invalid and will never be valid
+endpoint_not_valid | Subscription is no longer valid and should not be used again
+endpoint_not_found | Subscription is not valid and should not be used again
 not_implemented | Endpoint does not support encryption algorithm
 ... | Other errors
 
