@@ -45,12 +45,14 @@ jobs:
           Host deploy-host
             HostName $SSH_HOST
             User $SSH_USER
+            HostKey "$SSH_HOST_KEY"
             IdentityFile ~/.ssh/deploy.key
-            StrictHostKeyChecking no
+            ForwardAgent no
           END
         env:
           SSH_KEY: ${{ secrets.SSH_KEY }}
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST_KEY: ${{ secrets.SSH_HOST_KEY }}
       - name: Deploy via SSH
         run: cat lila-push | ssh deploy-host "mv /usr/local/bin/lila-push /usr/local/bin/lila-push.bak && cat - > /usr/local/bin/lila-push && chmod +x /usr/local/bin/lila-push && systemctl restart lila-push"
