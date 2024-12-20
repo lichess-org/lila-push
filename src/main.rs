@@ -6,11 +6,15 @@ use axum::{routing::post, Json, Router};
 use clap::{builder::PathBufValueParser, Parser};
 use listenfd::ListenFd;
 use serde::Deserialize;
+use tikv_jemallocator::Jemalloc;
 use tokio::{net::TcpListener, time::timeout};
 use web_push::{
     ContentEncoding::Aes128Gcm, HyperWebPushClient, PartialVapidSignatureBuilder, SubscriptionInfo,
     Urgency, VapidSignatureBuilder, WebPushClient, WebPushError, WebPushMessageBuilder,
 };
+
+#[global_allocator]
+static GLOBAL: Jemalloc = Jemalloc;
 
 #[derive(Parser, Debug)]
 struct Opt {
