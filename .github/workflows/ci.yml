@@ -41,13 +41,14 @@ jobs:
           touch ~/.ssh/deploy.key
           chmod 600 ~/.ssh/deploy.key
           echo "$SSH_KEY" > ~/.ssh/deploy.key
+          echo "$SSH_HOST $SSH_HOST_KEY" > ~/.ssh/known_hosts
           cat >>~/.ssh/config <<END
           Host deploy-host
             HostName $SSH_HOST
             User $SSH_USER
-            HostKey "$SSH_HOST_KEY"
             IdentityFile ~/.ssh/deploy.key
             ForwardAgent no
+            StrictHostKeyChecking yes
           END
         env:
           SSH_KEY: ${{ secrets.SSH_KEY }}
