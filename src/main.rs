@@ -90,12 +90,12 @@ async fn push(
                 }
                 Ok(Err(e)) => {
                     errs += 1;
-                    log::warn!("{:?}: {:?}", e, sub);
+                    log::warn!("{}: {:?}", sub.endpoint, e);
                     e.short_description()
                 }
                 Err(timeout) => {
                     errs += 1;
-                    log::error!("{:?}: {:?}", timeout, sub);
+                    log::error!("{}: {:?}", sub.endpoint, timeout);
                     "timeout"
                 }
             },
