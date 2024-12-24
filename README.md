@@ -15,7 +15,7 @@ Setup
 2. Print public key and set `push.web.vapid_public_key` in lila configuration:
 
    ```
-   openssl ec -in private.pem -pubout -outform DER | tail -c 65 | base64 | tr -d '\n' && echo
+   openssl ec -in private.pem -pubout -outform DER | tail -c 65 | base64 | tr '/+' '_-' | tr -d '\n' && echo
    ```
 
 3. Run microservice:
