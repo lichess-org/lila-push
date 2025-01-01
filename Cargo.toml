@@ -9,7 +9,7 @@ keywords = ["web-push", "vapid", "lichess"]
 edition = "2021"
 
 [dependencies]
-axum = "0.8.0-rc.1"
+axum = "0.8.1"
 clap = { version = "4", features = ["derive", "deprecated"] }
 env_logger = "0.11"
 log = "0.4"
