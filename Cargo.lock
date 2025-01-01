@@ -2021,7 +2021,7 @@ checksum = "943aab3fdaaa029a6e0271b35ea10b72b943135afe9bffca82384098ad0e06a6"
 [[package]]
 name = "web-push"
 version = "0.10.2"
-source = "git+https://github.com/niklasf/rust-web-push.git?branch=lichess#2005e8239bcbdcbaa808c98e20b136010d73f047"
+source = "git+https://github.com/niklasf/rust-web-push.git?branch=lichess#564fb2491b40e889dbdc209f1ff77b2c6d0286e8"
 dependencies = [
  "async-trait",
  "chrono",
