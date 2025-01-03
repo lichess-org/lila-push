@@ -7,7 +7,10 @@ use clap::{builder::PathBufValueParser, Parser};
 use listenfd::ListenFd;
 use serde::Deserialize;
 use tikv_jemallocator::Jemalloc;
-use tokio::{net::TcpListener, time::timeout};
+use tokio::{
+    net::{TcpListener, UnixListener},
+    time::timeout,
+};
 use web_push::{
     ContentEncoding::Aes128Gcm, HyperWebPushClient, PartialVapidSignatureBuilder, SubscriptionInfo,
     Urgency, VapidSignatureBuilder, WebPushClient, WebPushError, WebPushMessageBuilder,
@@ -132,16 +135,17 @@ async fn main() {
 
     let app = Router::new().route("/", post(move |req| push(app, req)));
 
-    let listener = match ListenFd::from_env()
-        .take_tcp_listener(0)
-        .expect("tcp listener")
-    {
-        Some(std_listener) => {
-            std_listener.set_nonblocking(true).expect("set nonblocking");
-            TcpListener::from_std(std_listener).expect("listener")
-        }
-        None => TcpListener::bind(&opt.bind).await.expect("bind"),
-    };
-
-    axum::serve(listener, app).await.expect("serve");
+    let mut fds = ListenFd::from_env();
+    if let Ok(Some(uds)) = fds.take_unix_listener(0) {
+        uds.set_nonblocking(true).expect("set nonblocking");
+        let listener = UnixListener::from_std(uds).expect("listener");
+        axum::serve(listener, app).await.expect("serve");
+    } else if let Ok(Some(tcp)) = fds.take_tcp_listener(0) {
+        tcp.set_nonblocking(true).expect("set nonblocking");
+        let listener = TcpListener::from_std(tcp).expect("listener");
+        axum::serve(listener, app).await.expect("serve");
+    } else {
+        let listener = TcpListener::bind(&opt.bind).await.expect("bind");
+        axum::serve(listener, app).await.expect("serve");
+    }
 }
