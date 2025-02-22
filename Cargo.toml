@@ -15,7 +15,7 @@ env_logger = "0.11"
 log = "0.4"
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
-web-push = { git = "https://github.com/niklasf/rust-web-push.git", branch = "lichess", features = ["hyper-client"], default-features = false }
+web-push = { git = "https://github.com/pimeys/rust-web-push", features = ["hyper-client"], default-features = false }
 listenfd = "1"
 tikv-jemallocator = { version = "0.6", features = ["unprefixed_malloc_on_supported_platforms"] }
 
