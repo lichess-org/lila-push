@@ -2059,8 +2059,8 @@ dependencies = [
 
 [[package]]
 name = "web-push"
-version = "0.10.4"
-source = "git+https://github.com/pimeys/rust-web-push#e9544c5bf787ac7b901e0c90d4012f6d8dd82389"
+version = "0.11.0"
+source = "git+https://github.com/pimeys/rust-web-push#8de73e2e6d3e56786561924dd132a76ea18ae042"
 dependencies = [
  "async-trait",
  "chrono",
