@@ -10,7 +10,7 @@ edition = "2021"
 
 [dependencies]
 axum = "0.8"
-clap = { version = "4", features = ["derive", "deprecated"] }
+clap = { version = "4", features = ["derive", "deprecated", "env"] }
 env_logger = "0.11"
 log = "0.4"
 serde = { version = "1", features = ["derive"] }
