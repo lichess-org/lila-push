@@ -22,14 +22,13 @@ static GLOBAL: Jemalloc = Jemalloc;
 #[derive(Parser, Debug)]
 struct Opt {
     /// PEM file with private VAPID key.
-    #[arg(long, value_parser = PathBufValueParser::new())]
+    #[arg(long, value_parser = PathBufValueParser::new(), env = "LILA_PUSH_VAPID")]
     vapid: PathBuf,
     /// VAPID subject (example: mailto:contact@lichess.org).
-    #[arg(long, alias = "subject")]
+    #[arg(long, alias = "subject", env = "LILA_PUSH_VAPID_SUBJECT")]
     vapid_subject: String,
-
     /// Listen on this socket address.
-    #[arg(long, default_value = "127.0.0.1:9054")]
+    #[arg(long, default_value = "127.0.0.1:9054", env = "LILA_PUSH_BIND")]
     bind: SocketAddr,
 }
 
