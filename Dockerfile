@@ -1,38 +1,25 @@
 # syntax=docker/dockerfile:1
-# Based on https://depot.dev/docs/container-builds/optimal-dockerfiles/rust-dockerfile
 
-FROM rust:1 AS build
-
+FROM rust:1-trixie AS chef
 RUN cargo install cargo-chef --locked
-
 WORKDIR /app
 
-COPY Cargo.toml Cargo.lock ./
-COPY src ./src
-
-RUN cargo chef prepare --recipe-path recipe.json
-
-RUN --mount=type=cache,target=/usr/local/cargo/registry,sharing=locked \
-    --mount=type=cache,target=/usr/local/cargo/git,sharing=locked \
-    cargo chef cook --release --recipe-path recipe.json
-
+FROM chef AS planner
 COPY . .
+RUN cargo chef prepare
 
-RUN --mount=type=cache,target=/usr/local/cargo/registry,sharing=locked \
-    --mount=type=cache,target=/usr/local/cargo/git,sharing=locked \
-    cargo build --release --bin lila-push
+FROM chef AS builder
+COPY --from=planner /app/recipe.json recipe.json
+RUN cargo chef cook --release
+COPY . .
+RUN cargo build --release
 
 FROM debian:trixie-slim AS runtime
-
 RUN apt-get update && \
     apt-get install -y --no-install-recommends ca-certificates && \
     rm -rf /var/lib/apt/lists/*
-
 RUN groupadd -g 1001 lichess && \
     useradd -u 1001 -g lichess -m -d /home/lichess -s /bin/bash lichess
-
-COPY --from=build --chown=lichess:lichess /app/target/release/lila-push /usr/local/bin/lila-push
-
+COPY --from=builder --chown=lichess:lichess /app/target/release/lila-push /usr/local/bin/lila-push
 USER lichess
-
 ENTRYPOINT ["/usr/local/bin/lila-push"]
